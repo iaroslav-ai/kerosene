@@ -20,7 +20,7 @@ from .utils.layer_utils import container_from_config
 from .utils.layer_utils import model_summary
 from .utils.generic_utils import Progbar
 from .layers import containers
-
+from . import error_measures
 
 def standardize_y(y):
     if not hasattr(y, 'shape'):
@@ -1204,7 +1204,7 @@ class Graph(Model, containers.Graph):
             output = self.outputs[output_name]
             y_train = output.get_output(True)
             y_test = output.get_output(False)
-            y = K.placeholder(ndim=K.ndim(y_train))
+            y = K.placeholder(ndim=K.ndim(y_train)+1)
             ys.append(y)
             ys_train.append(y_train)
             ys_test.append(y_test)
@@ -1219,9 +1219,9 @@ class Graph(Model, containers.Graph):
             else:
                 weight = K.placeholder(ndim=1)
             weights.append(weight)
-            weighted_loss = weighted_objective(objectives.get(loss_fn))
-            train_loss += weighted_loss(y, y_train, weight, mask)
-            test_loss += weighted_loss(y, y_test, weight, mask)
+            weighted_loss = error_measures.get(loss_fn)
+            train_loss += weighted_loss(y, y_train)
+            test_loss += weighted_loss(y, y_test)
 
         ins = [self.inputs[name].input for name in self.input_order]
         train_ins = ins + ys + weights
